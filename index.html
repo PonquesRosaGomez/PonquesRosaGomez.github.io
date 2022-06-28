@@ -513,12 +513,6 @@
           <!-- Elementos generados a partir del JSON -->
           <form action="https://formsubmit.co/ponques.rg@gmail.com" method="POST">
             <input type="hidden" name="_subject" value="NUEVO PEDIDO">
-            <script>
-              function mostrarPedido(){
-                classList.print();
-                calcularTotal.print();
-              }
-            </script>
             <main id="items" class="col-sm-8 row"></main>
             <!-- Carrito -->
             <aside class="col-sm-4">
@@ -534,7 +528,10 @@
               <div class="col-sm-6 form-group">
                 <input class="form-control" id="direccion" name="direccion" placeholder="Direccion" type="text"
                   required>
-              </div> 
+              </div>
+              <script>
+                DOMtotal.textContent = calcularTotal();
+              </script>
               <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
               <button class="btn btn-danger" type="submit">Hacer pedido</button>
           </form>
