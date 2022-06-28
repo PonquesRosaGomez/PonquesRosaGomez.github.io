@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet" type="text/css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Variables
+      const baseDeDatos = [
+        {
+          id: 1,
+          nombre: 'TORTA QUESILLO',
+          precio: 30000,
+          imagen: "TartaQuesilloRS.jpeg"
+        },
+        {
+          id: 2,
+          nombre: 'TORTA DE PIÑA',
+          precio: 30000,
+          imagen: "TartaPiñaRS.jpeg"
+        },
+        {
+          id: 3,
+          nombre: 'TORTA DE DURAZNO',
+          precio: 30000,
+          imagen: "TartaDuraznoRS.jpeg"
+        },
+        {
+          id: 4,
+          nombre: 'TORTA DE CHOCOLATE',
+          precio: 30000,
+          imagen: "TartaChocolateRS.jpeg"
+        }
+
+      ];
+
+      let carrito = [];
+      const divisa = '$';
+      const DOMitems = document.querySelector('#items');
+      const DOMcarrito = document.querySelector('#carrito');
+      const DOMtotal = document.querySelector('#total');
+      const DOMbotonVaciar = document.querySelector('#boton-vaciar');
+
+      // Funciones
+
+      /**
+      * Dibuja todos los productos a partir de la base de datos. No confundir con el carrito
+      */
+      function renderizarProductos() {
+        baseDeDatos.forEach((info) => {
+          // Estructura
+          const miNodo = document.createElement('div');
+          miNodo.classList.add('card', 'col-sm-4');
+          // Body
+          const miNodoCardBody = document.createElement('div');
+          miNodoCardBody.classList.add('card-body');
+          // Titulo
+          const miNodoTitle = document.createElement('h5');
+          miNodoTitle.classList.add('card-title');
+          miNodoTitle.textContent = info.nombre;
+          // Imagen
+          const miNodoImagen = document.createElement('img');
+          miNodoImagen.classList.add('img-fluid');
+          miNodoImagen.setAttribute('src', info.imagen);
+          // Precio
+          const miNodoPrecio = document.createElement('p');
+          miNodoPrecio.classList.add('card-text');
+          miNodoPrecio.textContent = `${info.precio}${divisa}`;
+          // Boton 
+          const miNodoBoton = document.createElement('button');
+          miNodoBoton.classList.add('btn', 'btn-danger');
+          miNodoBoton.textContent = 'Añadir';
+          miNodoBoton.setAttribute('marcador', info.id);
+          miNodoBoton.addEventListener('click', anyadirProductoAlCarrito);
+          // Insertamos
+          miNodoCardBody.appendChild(miNodoImagen);
+          miNodoCardBody.appendChild(miNodoTitle);
+          miNodoCardBody.appendChild(miNodoPrecio);
+          miNodoCardBody.appendChild(miNodoBoton);
+          miNodo.appendChild(miNodoCardBody);
+          DOMitems.appendChild(miNodo);
+        });
+      }
+
+      /**
+      * Evento para añadir un producto al carrito de la compra
+      */
+      function anyadirProductoAlCarrito(evento) {
+        // Anyadimos el Nodo a nuestro carrito
+        carrito.push(evento.target.getAttribute('marcador'))
+        // Actualizamos el carrito 
+        renderizarCarrito();
+
+      }
+
+      /**
+      * Dibuja todos los productos guardados en el carrito
+      */
+      function renderizarCarrito() {
+        // Vaciamos todo el html
+        DOMcarrito.textContent = '';
+        // Quitamos los duplicados
+        const carritoSinDuplicados = [...new Set(carrito)];
+        // Generamos los Nodos a partir de carrito
+        carritoSinDuplicados.forEach((item) => {
+          // Obtenemos el item que necesitamos de la variable base de datos
+          const miItem = baseDeDatos.filter((itemBaseDatos) => {
+            // ¿Coincide las id? Solo puede existir un caso
+            return itemBaseDatos.id === parseInt(item);
+          });
+          // Cuenta el número de veces que se repite el producto
+          const numeroUnidadesItem = carrito.reduce((total, itemId) => {
+            // ¿Coincide las id? Incremento el contador, en caso contrario no mantengo
+            return itemId === item ? total += 1 : total;
+          }, 0);
+          // Creamos el nodo del item del carrito
+          const miNodo = document.createElement('li');
+          miNodo.classList.add('list-group-item', 'text-right', 'mx-2');
+          miNodo.textContent = `${numeroUnidadesItem} x ${miItem[0].nombre} - ${miItem[0].precio}${divisa}`;
+          // Boton de borrar
+          const miBoton = document.createElement('button');
+          miBoton.classList.add('btn', 'btn-danger', 'mx-5');
+          miBoton.textContent = 'X';
+          miBoton.style.marginLeft = '1rem';
+          miBoton.dataset.item = item;
+          miBoton.addEventListener('click', borrarItemCarrito);
+          // Mezclamos nodos
+          miNodo.appendChild(miBoton);
+          DOMcarrito.appendChild(miNodo);
+        });
+        // Renderizamos el precio total en el HTML
+        DOMtotal.textContent = calcularTotal();
+      }
+
+      /**
+      * Evento para borrar un elemento del carrito
+      */
+      function borrarItemCarrito(evento) {
+        // Obtenemos el producto ID que hay en el boton pulsado
+        const id = evento.target.dataset.item;
+        // Borramos todos los productos
+        carrito = carrito.filter((carritoId) => {
+          return carritoId !== id;
+        });
+        // volvemos a renderizar
+        renderizarCarrito();
+      }
+
+      /**
+       * Calcula el precio total teniendo en cuenta los productos repetidos
+       */
+      function calcularTotal() {
+        // Recorremos el array del carrito 
+        return carrito.reduce((total, item) => {
+          // De cada elemento obtenemos su precio
+          const miItem = baseDeDatos.filter((itemBaseDatos) => {
+            return itemBaseDatos.id === parseInt(item);
+          });
+          // Los sumamos al total
+          return total + miItem[0].precio;
+        }, 0).toFixed(2);
+      }
+
+      /**
+      * Varia el carrito y vuelve a dibujarlo
+      */
+      function vaciarCarrito() {
+        // Limpiamos los productos guardados
+        carrito = [];
+        // Renderizamos los cambios
+        renderizarCarrito();
+      }
+
+      // Eventos
+      DOMbotonVaciar.addEventListener('click', vaciarCarrito);
+
+      // Inicio
+      renderizarProductos();
+      renderizarCarrito();
+    });
+  </script>
+
+  <style>
+    body {
+      font: 400 15px Lato, sans-serif;
+      line-height: 1.8;
+      color: #818181;
+    }
+
+    h2 {
+      font-size: 24px;
+      text-transform: uppercase;
+      color: #303030;
+      font-weight: 600;
+      margin-bottom: 30px;
+    }
+
+    h4 {
+      font-size: 19px;
+      line-height: 1.375em;
+      color: #303030;
+      font-weight: 400;
+      margin-bottom: 30px;
+    }
+
+    .jumbotron {
+      background-color: #f3b9a8;
+      color: rgb(0, 0, 0);
+      padding: 100px 25px;
+      font-family: Montserrat, sans-serif;
+    }
+
+    .container-fluid {
+      padding: 60px 50px;
+    }
+
+    .bg-grey {
+      background-color: #f6f6f6;
+    }
+
+    .logo-small {
+      color: #000000;
+      font-size: 50px;
+    }
+
+    .logo {
+      color: #000000;
+      font-size: 200px;
+    }
+
+    .thumbnail {
+      padding: 0 0 15px 0;
+      border: none;
+      border-radius: 0;
+    }
+
+    .thumbnail img {
+      width: 100%;
+      height: 100%;
+      margin-bottom: 10px;
+    }
+
+    .carousel-control.right,
+    .carousel-control.left {
+      background-image: none;
+      color: #f3b9a8;
+    }
+
+    .carousel-indicators li {
+      border-color: #f3b9a8;
+    }
+
+    .carousel-indicators li.active {
+      background-color: #f3b9a8;
+    }
+
+    .item h4 {
+      font-size: 19px;
+      line-height: 1.375em;
+      font-weight: 400;
+      font-style: italic;
+      margin: 70px 0;
+    }
+
+    .item span {
+      font-style: normal;
+    }
+
+    .panel {
+      border: 1px solid #f05353 e;
+      border-radius: 0 !important;
+      transition: box-shadow 0.5s;
+    }
+
+    .panel:hover {
+      box-shadow: 5px 0px 40px rgba(0, 0, 0, .2);
+    }
+
+    .panel-footer .btn:hover {
+      border: 1px solid #f4511e;
+      background-color: #fff !important;
+      color: #f4511e;
+    }
+
+    .panel-heading {
+      color: #fff !important;
+      background-color: #f05353 !important;
+      padding: 25px;
+      border-bottom: 1px solid transparent;
+      border-top-left-radius: 0px;
+      border-top-right-radius: 0px;
+      border-bottom-left-radius: 0px;
+      border-bottom-right-radius: 0px;
+    }
+
+    .panel-footer {
+      background-color: white !important;
+    }
+
+    .panel-footer h3 {
+      font-size: 32px;
+    }
+
+    .panel-footer h4 {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .panel-footer .btn {
+      margin: 15px 0;
+      background-color: #f05353;
+      color: #fff;
+    }
+
+    .navbar {
+      margin-bottom: 0;
+      background-color: #f05353;
+      z-index: 9999;
+      border: 0;
+      font-size: 12px !important;
+      line-height: 1.42857143 !important;
+      letter-spacing: 4px;
+      border-radius: 0;
+      font-family: Montserrat, sans-serif;
+    }
+
+    .navbar li a,
+    .navbar .navbar-brand {
+      color: rgb(0, 0, 0) !important;
+    }
+
+    .navbar-nav li a:hover,
+    .navbar-nav li.active a {
+      color: #f05353 !important;
+      background-color: #fff !important;
+    }
+
+    .navbar-default .navbar-toggle {
+      border-color: transparent;
+      color: #fff !important;
+    }
+
+    footer .glyphicon {
+      font-size: 20px;
+      margin-bottom: 20px;
+      color: #f4511e;
+    }
+
+    .slideanim {
+      visibility: hidden;
+    }
+
+    .slide {
+      animation-name: slide;
+      -webkit-animation-name: slide;
+      animation-duration: 1s;
+      -webkit-animation-duration: 1s;
+      visibility: visible;
+    }
+
+    @keyframes slide {
+      0% {
+        opacity: 0;
+        transform: translateY(70%);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0%);
+      }
+    }
+
+    @-webkit-keyframes slide {
+      0% {
+        opacity: 0;
+        -webkit-transform: translateY(70%);
+      }
+
+      100% {
+        opacity: 1;
+        -webkit-transform: translateY(0%);
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      .col-sm-4 {
+        text-align: center;
+        margin: 25px 0;
+      }
+
+      .btn-lg {
+        width: 100%;
+        margin-bottom: 35px;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .logo {
+        font-size: 150px;
+      }
+    }
+  </style>
+</head>
+
+<body id="myPage" data-spy="scroll" data-target=".navbar" data-offset="60">
+
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="#myPage">Inicio</a>
+      </div>
+      <div class="collapse navbar-collapse" id="myNavbar">
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#NOSOTROS">NOSOTROS</a></li>
+          <li><a href="#SERVICIOS">SERVICIOS</a></li>
+          <li><a href="#CATALOGO">CATÁLOGO</a></li>
+          <li><a href="#RECETAS">RECETAS</a></li>
+          <li><a href="#CONTACTO">CONTACTO</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="background-image">
+    <img src="public_html\Images\Logo2.jpeg" alt="logo" width="100%" height="400" />
+  </div>
+
+  <!-- Container (About Section) -->
+  <div id="NOSOTROS" class="container-fluid">
+    <div class="row">
+      <div class="col-sm-8">
+        <h2>Acerca de nuestro negocio</h2><br>
+        <h4>Nuestro nombre es Ponques Rosa Gomez y somos una empresa local que marca tendencias, ofreciendo productos de
+          primer nivel y un servicio al cliente excepcional que los compradores podrán obtener desde que llegan a
+          nuestro negocio hasta el momento de recibir su pedido. Somos un negocio compuesto por personas innovadoras que
+          siempre miran a futuro. Tenemos el impulso y los medios para actualizar y mejorar constantemente la
+          experiencia de tu compra y servicio.</h4><br>
+        <p>Nuestra págima virtual es sinónimo de calidad, por lo que te garantizamos contar con la mayor variedad de
+          mercancía así como de productos temporales o de edición limitada que se adaptan a cualquier presupuesto. Echa
+          un vistazo y empieza a comprar hoy mismo por medio de Whatsapp o llamada.</p>
+        <br>
+      </div>
+      <div class="col-sm-4">
+        <img src="C:\Users\Farid\OneDrive\Escritorio\SeminarioProject\Images\cupcake.png" alt="misionvision" width="250" height="250" />
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid bg-grey">
+    <div class="row">
+      <div class="col-sm-4">
+        <img src="C:\Users\Farid\OneDrive\Escritorio\SeminarioProject\Images\cupcake.png" alt="misionvision" width="250" height="250" />
+      </div>
+      <div class="col-sm-8">
+        <h2>Nuestros Valores</h2><br>
+        <h4><strong>MISSION:</strong> Ofrecer a nuestros clientes ponques de la máxima calidad, con la mejor preparación
+          y a precios justos. Buscando siempre superar las expectativas de sabor y la satisfacción total del paladar de
+          nuestros clientes y consumidores. Durante este tiempo hemos comprendido la importancia de seleccionar las
+          mejores materias primas, implementar tecnologías eficientes, y contar con un equipo de trabajo comprometido
+          con la empresa y con nuestros clientes. </h4><br>
+        <p><strong>VISION:</strong> Nuestro objetivo principal es que nuestra red de clientes encuentren una fuente
+          confiable y eficaz donde puedan realizar sus pedidos de ponques. Llegar de manera única al mercado dándose a
+          conocer por sus productos de calidad y nuestro personal calificado y por último garantizar el compromiso,
+          efectividad y mejoramiento continuo de nuestro servicio. </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor (Sección de servicios) -->
+  <div id="SERVICIOS" class="container-fluid text-center">
+    <h2>SERVICIOS</h2>
+    <h4>Te ofrecemos</h4>
+    <br>
+    <div class="row slideanim">
+      <div class="col-sm-4">
+        <span class="glyphicon glyphicon-heart logo-small"></span>
+        <h4>PONQUES DECORADOS PARA TODA OCASIÓN</h4>
+        <p>Tu sólo dinos lo que quieres y lo haremos realidad en un exquisito ponque</p>
+      </div>
+      <div class="col-sm-4">
+        <span class="glyphicon glyphicon-heart logo-small"></span>
+        <h4>MESAS DE DULCES</h4>
+        <p>Lindos y deliciosos postres, excelentes para decorar e impresionar a tus invitados</p>
+      </div>
+      <div class="col-sm-4">
+        <span class="glyphicon glyphicon-heart logo-small"></span>
+        <h4>PONQUES CASEROS</h4>
+        <p>Una experiencia deliciosa al estilo de la casa</p>
+      </div>
+    </div>
+    <br><br>
+  </div>
+
+  <!-- Contenedor (Sección de catálogo) -->
+  <div id="CATALOGO" class="container-fluid text-center bg-grey">
+    <h2>CATÁLOGO</h2><br>
+    <h4>Nuestras Creaciones</h4>
+    <div class="row text-center slideanim">
+      <div class="container">
+        <div class="row">
+
+          <!-- Elementos generados a partir del JSON -->
+          <main id="items" class="col-sm-8 row"></main>
+          <!-- Carrito -->
+          <aside class="col-sm-4">
+            <h2>Carrito</h2>
+            <form action="ponques.rg@gmail.com" method="post" enctype="text/plain">
+              <!-- Elementos del carrito -->
+              <ul id="carrito" class="list-group"></ul>
+              <hr>
+              <!-- Precio total -->
+              <p class="text-right">Total: <span id="total"></span> COP</p>
+              <div class="col-sm-6 form-group">
+                <input class="form-control" id="nombre" name="nombre" placeholder="Nombre" type="text" required>
+              </div>
+              <div class="col-sm-6 form-group">
+                <input class="form-control" id="direccion" name="direccion" placeholder="Direccion" type="text"
+                  required>
+              </div>
+              <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
+              <button class="btn btn-danger" type="submit">Hacer pedido</button>
+            </form>
+          </aside>
+        </div>
+      </div>
+    </div><br>
+    <h2>Lo que opinan nuestros clientes</h2>
+    <div id="myCarousel" class="carousel slide text-center" data-ride="carousel">
+      <!-- Indicators -->
+      <ol class="carousel-indicators">
+        <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+        <li data-target="#myCarousel" data-slide-to="1"></li>
+        <li data-target="#myCarousel" data-slide-to="2"></li>
+      </ol>
+
+      <!-- Wrapper for slides -->
+      <div class="carousel-inner" role="listbox">
+        <div class="item active">
+          <h4>"Esta empresa es la mejor!, siempre me sorprenden con los resultados"<br><span>Michael Rozo</span></h4>
+        </div>
+        <div class="item">
+          <h4>"Una palabra... WOW!!"<br><span>John Duran</span></h4>
+        </div>
+        <div class="item">
+          <h4>"Simplementes las mejores, su sabor delicioso y hermosos diseños"<br><span>Juan Fernandez</span></h4>
+        </div>
+      </div>
+
+      <!-- Left and right controls -->
+      <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev">
+        <span class="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>
+        <span class="sr-only">Previous</span>
+      </a>
+      <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next">
+        <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+        <span class="sr-only">Next</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Contenedor (Sección de recetas) -->
+  <div id="RECETAS" class="container-fluid">
+    <div class="text-center">
+      <h2>RECETAS</h2>
+      <h4>Algunas ideas dulces que podras preparar en casa</h4>
+    </div>
+    <div class="row slideanim">
+      <div class="col-sm-4 col-xs-12">
+        <div class="panel panel-default text-center">
+          <div class="panel-heading">
+            <h1>Merengue de Coco</h1>
+          </div>
+          <div class="panel-body">
+            <p><strong>4</strong> Claras de huevo</p>
+            <p><strong>1</strong> Taza de coco rayado sin azucar</p>
+            <p>Endulzante al gusto</p>
+            <p><strong>1/4</strong> Cucharada de Tremor tartaro</p>
+            <p>Vainilla (Opcional)</p>
+            <p><strong>1</strong> Cucharada de jugo de limón</p>
+            <p><strong>5</strong> Gotas de vinagre</p>
+            <p>Una pizca de sal</p>
+            <div class="panel-footer">
+              <button class="btn btn-lg">Conócela</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4 col-xs-12">
+        <div class="panel panel-default text-center">
+          <div class="panel-heading">
+            <h1>Torta de Banana y Chocolate</h1>
+          </div>
+          <div class="panel-body">
+            <p><strong>3</strong> Bananas machacadas</p>
+            <p><strong>2</strong> Tazas de harina leudante</p>
+            <p><strong>3/4</strong> Taza de azucar</p>
+            <p><strong>3/4</strong> Taza de nueces picadas</p>
+            <p><strong>100gr</strong> Chocolate amargo</p>
+            <p><strong>100ml</strong> Leche</p>
+            <p><strong>4</strong> Cucharadas de aceite</p>
+            <p><strong>1</strong> Cucharada de esencia de vainilla o canela en polvo</p>
+            <div class="panel-footer">
+              <button class="btn btn-lg">Conócela</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4 col-xs-12">
+        <div class="panel panel-default text-center">
+          <div class="panel-heading">
+            <h1>Torta de calabza</h1>
+          </div>
+          <div class="panel-body">
+            <p><strong>100gr</strong> Azucar</p>
+            <p><strong>50</strong> Levadura</p>
+            <p><strong>25</strong> Aceite</p>
+            <p><strong>10</strong> Polvo para hornear</p>
+            <p><strong>75gr</strong> Mantequilla</p>
+            <p><strong>500gr</strong> Calabaza</p>
+            <div class="panel-footer">
+              <button class="btn btn-lg">Conócela</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container (Contact Section) -->
+  <div id="CONTACTO" class="container-fluid bg-grey">
+    <h2 class="text-center">CONTACTO</h2>
+    <div class="row">
+      <div class="col-sm-5">
+        <p>Contactanos y estaremos comunicandonos contigo en las próximas 24 horas.</p>
+        <p><span class="glyphicon glyphicon-map-marker"></span> Av. 5 #4-80 San Luis, Cúcuta, Norte de Santander,
+          Colombia</p>
+        <p><span class="glyphicon glyphicon-phone"></span> +57 317 379 1263</p>
+        <p><span class="glyphicon glyphicon-envelope"></span><a href="mailto:ponques.rg@gmail.com">ponques.rg@gmail.com</a></p>
+        <span><a href="https://www.instagram.com/ponques.rg/"><img src="C:\Users\Farid\OneDrive\Escritorio\SeminarioProject\Images\instagram.png" width="45" height="45"
+              style="right: 100%" ;></a></li>
+          <span><a href="https://www.facebook.com/PonquesRosaGomez/"><img src="C:\Users\Farid\OneDrive\Escritorio\SeminarioProject\Images\facebook.png" width="45" height="45"></a>
+            </li>
+            <span><a href="https://api.whatsapp.com/send?phone=573173791263"><img src="C:\Users\Farid\OneDrive\Escritorio\SeminarioProject\Images\whatsapp.png" width="45"
+                  height="45"></a></li>
+      </div>
+      <div class="col-sm-7 slideanim">
+        <div class="row">
+          <form action="ponques.rg@gmail.com" method="post" enctype="text/plain">
+            <div class="col-sm-6 form-group">
+              <input class="form-control" id="nombre" name="nombre" placeholder="Nombre" type="text" required>
+            </div>
+            <div class="col-sm-6 form-group">
+              <input class="form-control" id="correo" name="correo" placeholder="Correo" type="email" required>
+            </div>
+        </div>
+        <textarea class="form-control" id="comentarios" name="comentarios" placeholder="Comentarios"
+          rows="5"></textarea><br>
+        <div class="row">
+          <div class="col-sm-12 form-group">
+            <button class="btn btn-default pull-right" type="submit">Send</button>
+          </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image of location/map -->
+  <iframe
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.9597234424446!2d-72.48146035013662!3d7.89927689428144!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e66451b7e5c0633%3A0xe14cc4a1926efc8a!2sPonques%20Rosa%20Gomez!5e0!3m2!1ses!2sco!4v1653868165766!5m2!1ses!2sco"
+    width=100% height="450" style="border:0;" allowfullscreen="" loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+  <footer class="container-fluid text-center">
+    <a href="#myPage" title="To Top">
+      <span class="glyphicon glyphicon-chevron-up"></span>
+    </a>
+  </footer>
+
+  <script>
+    $(document).ready(function () {
+      // Add smooth scrolling to all links in navbar + footer link
+      $(".navbar a, footer a[href='#myPage']").on('click', function (event) {
+        // Make sure this.hash has a value before overriding default behavior
+        if (this.hash !== "") {
+          // Prevent default anchor click behavior
+          event.preventDefault();
+
+          // Store hash
+          var hash = this.hash;
+
+          // Using jQuery's animate() method to add smooth page scroll
+          // The optional number (900) specifies the number of milliseconds it takes to scroll to the specified area
+          $('html, body').animate({
+            scrollTop: $(hash).offset().top
+          }, 900, function () {
+
+            // Add hash (#) to URL when done scrolling (default click behavior)
+            window.location.hash = hash;
+          });
+        } // End if
+      });
+
+      $(window).scroll(function () {
+        $(".slideanim").each(function () {
+          var pos = $(this).offset().top;
+
+          var winTop = $(window).scrollTop();
+          if (pos < winTop + 600) {
+            $(this).addClass("slide");
+          }
+        });
+      });
+    })
+  </script>
+
+</html>
