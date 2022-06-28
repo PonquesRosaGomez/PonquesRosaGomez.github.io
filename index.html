@@ -511,12 +511,12 @@
         <div class="row">
 
           <!-- Elementos generados a partir del JSON -->
-          <main id="items" class="col-sm-8 row"></main>
-          <!-- Carrito -->
-          <aside class="col-sm-4">
-            <h2>Carrito</h2>
-            <form action="https://formsubmit.co/ponques.rg@gmail.com" method="POST">
-              <input type="hidden" name="_subject" value="NUEVO PEDIDO">
+          <form action="https://formsubmit.co/ponques.rg@gmail.com" method="POST">
+            <input type="hidden" name="_subject" value="NUEVO PEDIDO">
+            <main id="items" class="col-sm-8 row"></main>
+            <!-- Carrito -->
+            <aside class="col-sm-4">
+              <h2>Carrito</h2>
               <!-- Elementos del carrito -->
               <ul id="carrito" class="list-group"></ul>
               <hr>
@@ -531,7 +531,7 @@
               </div>
               <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
               <button class="btn btn-danger" type="submit">Hacer pedido</button>
-            </form>
+          </form>
           </aside>
         </div>
       </div>
