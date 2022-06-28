@@ -529,9 +529,11 @@
                 <input class="form-control" id="direccion" name="direccion" placeholder="Direccion" type="text"
                   required>
               </div>
-              <script>
-                DOMtotal.textContent = calcularTotal();
-              </script>
+              <div class="col-sm-6 form-group">
+                <input class="form-control" id="telefono" name="telefono" placeholder="Telefono" type="text" required>
+              </div>
+              <textarea class="form-control" id="pedido" name="pedido" placeholder="Digite los elementos del carrito de compras"
+            rows="5"></textarea><br>              
               <button id="boton-vaciar" class="btn btn-danger">Vaciar</button>
               <button class="btn btn-danger" type="submit">Hacer pedido</button>
           </form>
